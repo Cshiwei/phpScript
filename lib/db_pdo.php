@@ -12,12 +12,12 @@ class orgDB{
 		}
 	}
 	
-	public function fetchone( $query, $args ){
+	public function fetchone( $query, $args='' ){
 		$result = $this->fetch($query, $args);
 		return $result === false ? false : $result[0];
 	}
 
-	public function fetch( $query, $args ){
+	public function fetch( $query, $args='' ){
 		if($this->dbh){
 			$sth = $this->dbh->prepare($query);
 			if (!empty($args)) {
@@ -35,7 +35,7 @@ class orgDB{
 	}
 
 
-	public function execute( $query , $args){
+	public function execute( $query , $args=''){
 		$success = false;
 		if($this->dbh){
 			$sth = $this->dbh->prepare($query);

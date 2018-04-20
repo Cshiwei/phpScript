@@ -6,8 +6,9 @@
  * Time: 13:50
  * 初始化，加载项目运行必要的文件
  */
-define('ENVIRONMENT', 'development');
 
+define('ENVIRONMENT', 'development');
+global $_PHPSCRIPT;
 //csw 根据环境不同控制报错级别
 switch (ENVIRONMENT)
 {
@@ -20,13 +21,9 @@ switch (ENVIRONMENT)
     case 'production':
         ini_set('display_errors', 0);
         if (version_compare(PHP_VERSION, '5.3', '>='))
-        {
             error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-        }
         else
-        {
             error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
-        }
         break;
 
     default:
@@ -59,13 +56,17 @@ define('PHPMAILERPATH',LIBPATH.DIRECTORY_SEPARATOR.'phpmailer');
 //csw定义模型文件的地址
 define('MODELPATH',BASEPATH.DIRECTORY_SEPARATOR.'model');
 
+//csw定义日志文件路径
+define('LOGPATH',BASEPATH.DIRECTORY_SEPARATOR.'log');
+
 //csw加载器类
 require_once LIBPATH.DIRECTORY_SEPARATOR."loader.php";
-$L = loader::getInstance();
+$_L = loader::getInstance();
 //加载文件配置类
-$L->lib('config');
+$_L->lib('config');
 $_C = config::getInstance();
 $_C->load('autoloader');
+$_C->load('config');
 //csw 加载函数库
 $preFunction = $_C->item('autoloader')['function'];
 if($preFunction){
@@ -102,4 +103,22 @@ function PHPMailerAutoload($classname)
 
 spl_autoload_register('autoLoader');
 spl_autoload_register('PHPMailerAutoload');
+
+//csw根据参数实例化不同的脚本文件
+$script = isset($argv[1]) ? $argv[1] : '';
+$scriptFile = APPPATH.DIRECTORY_SEPARATOR.$script.'.php';
+if(!$script || !file_exists($scriptFile))
+    die('请指定有效任务脚本');
+
+$_L->controller('controller');
+$_L->controller($script);
+
+$_PHPSCRIPT['taskId'] = uniqid();
+$_PHPSCRIPT['beginTime'] = time();
+$scriptObj = new $script();
+$scriptObj->run();
+$_PHPSCRIPT['endTime'] = time();
+$_PHPSCRIPT['maxMemeroy'] = round(memory_get_peak_usage()/1024/1024,2);
+$msg = "任务[{$script}-{$_PHPSCRIPT['taskId']}]:{$_PHPSCRIPT['beginTime']}-{$_PHPSCRIPT['endTime']},memeory-max:{$_PHPSCRIPT['maxMemeroy']}MB";
+logMsg($msg,'system');
 ?>

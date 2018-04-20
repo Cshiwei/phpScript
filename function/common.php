@@ -45,3 +45,88 @@ if(!function_exists('myEcho'))
         }
     }
 }
+
+/**csw
+ * 获取二维数组里第一个元素组成一个新的一维数组
+ */
+if(!function_exists('array_column'))
+{
+    function array_column($input,$colum_key,$index_key=null)
+    {
+        $newArr = array();
+        foreach ($input as $key=>$val)
+        {
+            if(!empty($index_key))
+                $newArr[$val[$index_key]] = $val[$colum_key];
+            else
+                $newArr[] = $val[$colum_key];
+        }
+        return $newArr;
+    }
+}
+
+/**csw
+ * 生成日志函数
+ */
+if( ! function_exists('logMsg'))
+{
+    function logMsg($msg,$path='',$file='',$cover=false)
+    {
+        $log_path = LOGPATH.DIRECTORY_SEPARATOR;               //指定记录日志的文件路径
+        $config = config::getInstance()->item('config');
+        $file_ext =
+            (isset($config['log_file_extension']) && $config['log_file_extension'] !== '')
+                ? ltrim($config['log_file_extension'], '.')
+                : 'php';
+        if( ! $file)
+        {
+            $file = 'log-'.date('Y-m-d');
+        }
+        $path = dealSeparator($path);
+        $filePath = $log_path.$path.DIRECTORY_SEPARATOR;
+
+        if(!file_exists($filePath))
+        {
+            if(!mkdir($filePath,0777,true))
+                return false;
+        }
+
+        $file = $filePath.$file.'.'.$file_ext;
+        $message ='';
+        if ( ! file_exists($file))
+        {
+            $newfile = TRUE;
+            if ($file_ext === 'php')
+            {
+                $message .= "<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>\n\n";
+            }
+        }
+        if( ! $cover)
+        {
+            if ( ! $fp = fopen($file, 'ab'))                    //新建或者打开文件(以附加内容的方式打开文件)
+                return FALSE;
+        }
+        else
+        {
+            if ( ! $fp = fopen($file, 'w'))                    //新建或者打开文件(以覆盖方式写入文件)
+                return FALSE;
+        }
+        $date = date('Y-m-d H:i:s',time());
+        $message .= $date.' --> '.$msg."\n";
+        flock($fp, LOCK_EX);
+        for ($written = 0, $length = strlen($message); $written < $length; $written += $result)
+        {
+            if (($result = fwrite($fp, substr($message, $written))) === FALSE)
+            {
+                break;
+            }
+        }
+        flock($fp, LOCK_UN);
+        fclose($fp);
+        if (isset($newfile) && $newfile === TRUE)
+        {
+            chmod($file, 0644);
+        }
+        return is_int($result);
+    }
+}

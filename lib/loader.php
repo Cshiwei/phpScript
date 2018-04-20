@@ -16,6 +16,7 @@ class loader {
         'function' =>'',
         'lib'      =>'',
         'model'    => '',
+        'controller' => '',
     );
 
     private function __construct()
@@ -48,6 +49,12 @@ class loader {
         return $this->_load('lib',$libName);
     }
 
+    //csw 按需加载控制器
+    public function controller($controller)
+    {
+        return $this->_load('controller',$controller);
+    }
+
     private function _load($module,$name)
     {
         switch($module)
@@ -60,6 +67,9 @@ class loader {
                 break;
             case 'lib' :
                 $modulePath = LIBPATH;
+                break;
+            case 'controller' :
+                $modulePath = APPPATH;
                 break;
             default :
                 $modulePath = false;
